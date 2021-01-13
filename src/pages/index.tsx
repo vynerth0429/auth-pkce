@@ -1,7 +1,23 @@
-import Head from 'next/head'
+import { useEffect } from 'react';
+import Head from 'next/head';
+import { useRouter } from 'next/router'
+
 import styles from './../styles/Home.module.scss'
+import { Auth0Setting } from '../constants/auth/auth0';
+import { AuthKeys } from '../constants/auth/authKeys';
+import useAuth from '../hooks/useAuth';
 
 export default function Home() {
+  const router = useRouter();
+  const { authenticate } = useAuth(Auth0Setting);
+
+  useEffect(() => {
+    const { code, state } = router.query;
+    if (code && state) {
+      authenticate({code, state});
+    }
+  }, [router.query])
+
   return (
     <div className={styles.container}>
       <Head>
@@ -20,7 +36,7 @@ export default function Home() {
         </p>
 
         <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
+          <a href="/auth" className={styles.card}>
             <h3>Documentation &rarr;</h3>
             <p>Find in-depth information about Next.js features and API.</p>
           </a>
