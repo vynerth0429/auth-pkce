@@ -54,8 +54,6 @@ const useAuth = () => {
     const localVerifier = localStorage.getItem(AuthKeys.PKCE_CODE_VERIFIER_TAG);
     const localIDS = JSON.parse(localStorage.getItem(AuthKeys.PKCE_IDENTITY_SERVER)) as IIdentityServer;
 
-    console.log('localIDS ->', localIDS);
-
     if (!(localState && localVerifier && localIDS)) {
       return;
     }
