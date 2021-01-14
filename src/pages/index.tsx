@@ -5,6 +5,7 @@ import { useRouter } from 'next/router'
 import styles from './../styles/Home.module.scss'
 import { Auth0Setting } from '../constants/auth/auth0';
 import { AzureSetting } from '../constants/auth/azure';
+import { AWSSetting } from '../constants/auth/aws';
 
 import useAuth, { IIdentityServer } from '../hooks/useAuth';
 
@@ -53,10 +54,10 @@ export default function Home() {
           </a>
 
           <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
             className={styles.card}
+            onClick={() => login(AWSSetting)}
           >
-            <h3>AWS Login &rarr;</h3>
+            <h3>AWS Cognito Login &rarr;</h3>
             <p>Authenticate via AWS authorization server.</p>
           </a>
         </div>
