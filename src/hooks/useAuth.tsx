@@ -7,6 +7,7 @@ import qs from 'query-string';
 import { AuthKeys } from '../constants/auth/authKeys';
 
 export type IIdentityServer = {
+  tag: string,
   loginUrl: string,
   authUrl: string,
   codeChallengeMethod: string,
@@ -25,24 +26,24 @@ export type TAuthResponse = {
   token_type: string;
 };
 
-const useAuth = (ids: IIdentityServer) => {
-  const [idsConfig] = useState(ids);
-
-  const signInWithRedirectAsync = async () => {
+const useAuth = () => {
+  const signInWithRedirectAsync = async (ids: IIdentityServer) => {
     const state = getRandomString(32);
     const verifier = getCodeVerifier();
     const challenge = await getCodeChallengeAsync(verifier);
 
-    let loginUrl = `${idsConfig.loginUrl}?`;
-    loginUrl += `response_type=${encodeURIComponent(idsConfig.responseType)}`;
-    loginUrl += `&client_id=${encodeURIComponent(idsConfig.clientId)}`;
+    let loginUrl = `${ids.loginUrl}?`;
+    loginUrl += `response_type=${encodeURIComponent(ids.responseType)}`;
+    loginUrl += `&client_id=${encodeURIComponent(ids.clientId)}`;
     loginUrl += `&code_challenge=${encodeURIComponent(challenge)}`;
-    loginUrl += `&code_challenge_method=${encodeURIComponent(idsConfig.codeChallengeMethod)}`;
+    loginUrl += `&code_challenge_method=${encodeURIComponent(ids.codeChallengeMethod)}`;
     loginUrl += `&redirect_uri=${encodeURIComponent(window.location.origin)}`;
     loginUrl += `&state=${encodeURIComponent(state)}`;
+    loginUrl += `&scope=${encodeURIComponent(ids.scope)}`;
 
     localStorage.setItem(AuthKeys.PKCE_STATE_TAG, state);
     localStorage.setItem(AuthKeys.PKCE_CODE_VERIFIER_TAG, verifier);
+    localStorage.setItem(AuthKeys.PKCE_IDENTITY_SERVER, JSON.stringify(ids));
 
     window.location.href = loginUrl;
   }
@@ -50,18 +51,19 @@ const useAuth = (ids: IIdentityServer) => {
   const authenticate = async ({code, state}) => {
     const localState = localStorage.getItem(AuthKeys.PKCE_STATE_TAG);
     const localVerifier = localStorage.getItem(AuthKeys.PKCE_CODE_VERIFIER_TAG);
+    const localIDS = JSON.parse(localStorage.getItem(AuthKeys.PKCE_IDENTITY_SERVER)) as IIdentityServer;
 
-    if (!(localState && localVerifier)) {
+    if (!(localState && localVerifier && localIDS)) {
       return;
     }
 
     if (state === localState) {
-      const tokenUri = idsConfig.authUrl;
+      const tokenUri = localIDS.authUrl;
 
       const payload = {
         grant_type: 'authorization_code',
         code: code,
-        client_id: idsConfig.clientId,
+        client_id: localIDS.clientId,
         redirect_uri: window.location.origin,
         code_verifier: localVerifier,
       };
@@ -77,8 +79,10 @@ const useAuth = (ids: IIdentityServer) => {
 
       const data = await response.json();
 
+      console.log('DATA ->', data);
+
       if (data?.['id_token']) {
-        localStorage.setItem(AuthKeys.AUTH_TAG, data);
+        localStorage.setItem(localIDS.tag, JSON.stringify(data));
       }
     }
 

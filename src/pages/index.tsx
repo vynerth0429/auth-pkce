@@ -4,12 +4,13 @@ import { useRouter } from 'next/router'
 
 import styles from './../styles/Home.module.scss'
 import { Auth0Setting } from '../constants/auth/auth0';
-import { AuthKeys } from '../constants/auth/authKeys';
-import useAuth from '../hooks/useAuth';
+import { AzureSetting } from '../constants/auth/azure';
+
+import useAuth, { IIdentityServer } from '../hooks/useAuth';
 
 export default function Home() {
   const router = useRouter();
-  const { authenticate } = useAuth(Auth0Setting);
+  const { signInWithRedirectAsync, authenticate } = useAuth();
 
   useEffect(() => {
     const { code, state } = router.query;
@@ -17,6 +18,10 @@ export default function Home() {
       authenticate({code, state});
     }
   }, [router.query])
+
+  const login = (ids: IIdentityServer) => {
+    signInWithRedirectAsync(ids);
+  };
 
   return (
     <div className={styles.container}>
@@ -36,32 +41,24 @@ export default function Home() {
         </p>
 
         <div className={styles.grid}>
-          <a href="/auth" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
+          <a className={styles.card}
+            onClick={() => login(Auth0Setting)}>
+            <h3>Auth0 Login &rarr;</h3>
+            <p>Authenticate via Auth0 authorization server</p>
           </a>
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
+          <a className={styles.card}
+            onClick={() => login(AzureSetting)}>
+            <h3>Azure Login &rarr;</h3>
+            <p>Authenticate via Azure authorization server.</p>
           </a>
 
           <a
             href="https://github.com/vercel/next.js/tree/master/examples"
             className={styles.card}
           >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
+            <h3>AWS Login &rarr;</h3>
+            <p>Authenticate via AWS authorization server.</p>
           </a>
         </div>
       </main>
