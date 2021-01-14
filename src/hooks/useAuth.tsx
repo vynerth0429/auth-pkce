@@ -12,6 +12,7 @@ export type IIdentityServer = {
   authUrl: string,
   codeChallengeMethod: string,
   clientId: string,
+  clientSecret?: string,
   redirectUri?: string,
   scope?: string,
   audience: string,
@@ -53,6 +54,8 @@ const useAuth = () => {
     const localVerifier = localStorage.getItem(AuthKeys.PKCE_CODE_VERIFIER_TAG);
     const localIDS = JSON.parse(localStorage.getItem(AuthKeys.PKCE_IDENTITY_SERVER)) as IIdentityServer;
 
+    console.log('localIDS ->', localIDS);
+
     if (!(localState && localVerifier && localIDS)) {
       return;
     }
@@ -66,6 +69,7 @@ const useAuth = () => {
         client_id: localIDS.clientId,
         redirect_uri: window.location.origin,
         code_verifier: localVerifier,
+        client_secret: localIDS.clientSecret ? localIDS.clientSecret : null
       };
 
       const response = await fetch(tokenUri, {
