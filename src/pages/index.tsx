@@ -11,18 +11,27 @@ import useAuth, { IIdentityServer } from '../hooks/useAuth';
 
 export default function Home() {
   const router = useRouter();
-  const { signInWithRedirectAsync, authenticate } = useAuth();
+  const { signInWithRedirectAsync, authenticate, userInfo, getUserInfo } = useAuth();
+
+  const login = (ids: IIdentityServer) => {
+    signInWithRedirectAsync(ids);
+  };
+
+  const getUserInfoData = () => {
+    getUserInfo();
+  }
 
   useEffect(() => {
     const { code, state } = router.query;
     if (code && state) {
       authenticate({code, state});
+      getUserInfoData();
     }
-  }, [router.query])
+  }, [router.query]);
 
-  const login = (ids: IIdentityServer) => {
-    signInWithRedirectAsync(ids);
-  };
+  useEffect(() => {
+    getUserInfoData();
+  }, []);
 
   return (
     <div className={styles.container}>
@@ -39,6 +48,14 @@ export default function Home() {
         <p className={styles.description}>
           The next level auth. 😎
         </p>
+
+        <p className={styles.description}>
+          { JSON.stringify(userInfo) }
+        </p>
+
+        <a className={styles.card}>
+          <p>Get user info 🔄</p>
+        </a>
 
         <div className={styles.grid}>
           <a className={styles.card}

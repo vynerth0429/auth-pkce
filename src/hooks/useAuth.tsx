@@ -1,15 +1,14 @@
-import {
-  useState,
-} from 'react';
-
 import qs from 'query-string';
+import jwt_decode from "jwt-decode";
 
 import { AuthKeys } from '../constants/auth/authKeys';
+import { useState } from 'react';
 
 export type IIdentityServer = {
   tag: string,
   loginUrl: string,
   authUrl: string,
+  userInfoUrl: string,
   codeChallengeMethod: string,
   clientId: string,
   clientSecret?: string,
@@ -28,6 +27,8 @@ export type TAuthResponse = {
 };
 
 const useAuth = () => {
+  const [userInfo, setUserInfo] = useState();
+
   const signInWithRedirectAsync = async (ids: IIdentityServer) => {
     const state = getRandomString(32);
     const verifier = getCodeVerifier();
@@ -67,7 +68,7 @@ const useAuth = () => {
         client_id: localIDS.clientId,
         redirect_uri: window.location.origin,
         code_verifier: localVerifier,
-        client_secret: localIDS.clientSecret ? localIDS.clientSecret : null
+        client_secret: localIDS.clientSecret ? localIDS.clientSecret : null,
       };
 
       const response = await fetch(tokenUri, {
@@ -92,7 +93,71 @@ const useAuth = () => {
     window.history.replaceState({}, '', '/');
   }
 
-  return { signInWithRedirectAsync, authenticate };
+  const getUserInfo = async () => {
+    console.log('-------- GET USER INFO --------');
+    const localIDS = JSON.parse(localStorage.getItem(AuthKeys.PKCE_IDENTITY_SERVER)) as IIdentityServer;
+
+    if (localIDS) {
+      const dataIDP = JSON.parse(localStorage.getItem(localIDS.tag));
+      console.log('dataIDP ->', dataIDP);
+
+      if (dataIDP) {
+        const tokenUri = localIDS.userInfoUrl;
+
+        const response = await fetch(tokenUri, {
+          method: 'post',
+          headers: {
+            'Authorization': `${dataIDP['token_type']} ${dataIDP['access_token']}`
+          },
+        });
+
+        const data = await response.json();
+        setUserInfo(data);
+        localStorage.setItem(AuthKeys.AUTH_USER_INFO, JSON.stringify(data));
+
+        // await getRefreshToken();
+        console.log('getUserInfo DATA ->', data);
+      }
+    }
+  }
+
+  const getRefreshToken = async () => {
+    const localIDS = JSON.parse(localStorage.getItem(AuthKeys.PKCE_IDENTITY_SERVER)) as IIdentityServer;
+
+    if (localIDS) {
+      const dataIDP = JSON.parse(localStorage.getItem(localIDS.tag));
+      console.log('dataIDP ->', dataIDP);
+
+      if (dataIDP) {
+        const tokenUri = localIDS.authUrl;
+
+        const payload = {
+          grant_type: 'refresh_token',
+          client_id: localIDS.clientId,
+          refresh_token: dataIDP['refresh_token'],
+          client_secret: localIDS.clientSecret ? localIDS.clientSecret : null,
+        };
+
+        const response = await fetch(tokenUri, {
+          method: 'post',
+          headers: {
+            'Content-Type': AuthKeys.AUTH_API_CTYPE,
+          },
+          body: qs.stringify(payload),
+        });
+
+        const data = await response.json();
+        localStorage.setItem(localIDS.tag, JSON.stringify({
+          ...dataIDP,
+          ...data
+        }));
+
+        console.log('getRefreshToken DATA ->', data);
+      }
+    }
+  }
+
+  return { signInWithRedirectAsync, authenticate, getUserInfo, userInfo };
 }
 
 function getRandomString(length: number): string {

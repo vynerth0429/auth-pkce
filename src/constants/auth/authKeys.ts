@@ -5,4 +5,5 @@ export const AuthKeys = {
   AUTH_LAST_UPDATE_TAG: 'last_update',
   AUTH_API_CTYPE: 'application/x-www-form-urlencoded; charset=UTF-8',
   AUTH_API_ACCEPT: 'application/json, text/plain, */*',
+  AUTH_USER_INFO: 'pkce_user_info',
 }
