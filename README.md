@@ -1,34 +1,67 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## About
 
-## Getting Started
+This is a WIP proof-of-concept React hook authentication using the OAuth 2.0 authorization code flow. Allowing developers to use authentication from different major identity providers - **Auth0**, **AWS** and **Azure**.
 
-First, run the development server:
+**Auth-pkce hook** provides the following methods:
 
-```bash
-npm run dev
-# or
-yarn dev
+1. *signInWithRedirectAsync*
+2. *authenticate*
+
+---
+#### 1. signInWithRedirectAsync
+```
+(ids: IIdentityServer) => void
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This will redirect the user to the authentication UI provided by the chosen Identity Provider.
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+The following query parameters are attached to the authorazation link:
+```bash
+response_type
+client_id
+code_challenge
+code_challenge_method
+redirect_uri
+state
+scope
+```
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+Identity Provider will then redirect the user to the provided **redirect_uri** with the **code** and **state** attached as query parameters.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+#### 2. authenticate
+```
+({code, state}) => void
+```
 
-## Learn More
+This will attempt to connect with the Login API of the Identity Provider which returns authorization data like **authorization token** and **refresh token**.
 
-To learn more about Next.js, take a look at the following resources:
+###### Payload
+```bash
+const payload = {
+  grant_type,
+  code: code,
+  client_id,
+  redirect_uri,
+  code_verifier,
+  client_secret,
+};
+```
+***
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/import?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+#### Types
+###### IIdentityServer Interface
+```bash
+export interface IIdentityServer {
+  tag: string,
+  loginUrl: string,
+  authUrl: string,
+  userInfoUrl: string,
+  codeChallengeMethod: string,
+  clientId: string,
+  clientSecret?: string,
+  redirectUri?: string,
+  scope?: string,
+  audience: string,
+  responseType: string,
+}
+```
